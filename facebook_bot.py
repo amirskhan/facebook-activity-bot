@@ -1,4 +1,3 @@
-# selenium-driver.py
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 import time
@@ -7,6 +6,7 @@ from pathlib import Path
 import random
 from selenium.webdriver.common.keys import Keys
 from multiprocessing import Pool
+import psutil
 
 
 def account_fun():
@@ -37,14 +37,17 @@ def selenium_driver(account):
     options.add_argument("--disable-notifications")
     driver = webdriver.Chrome(executable_path=driver_path, options=options)
     website = "https://www.facebook.com/"
-
-    with open(cookies_path) as cookie_file:
-        cookies = json.load(cookie_file)
-    # for website in self.cookies_websites:
-    driver.get(website)
-    for cookie in cookies:
-        driver.add_cookie(cookie)
-    driver.refresh()
+    try:
+        with open(cookies_path) as cookie_file:
+            cookies = json.load(cookie_file)
+        # for website in self.cookies_websites:
+        driver.get(website)
+        for cookie in cookies:
+            driver.add_cookie(cookie)
+        driver.refresh()
+    except Exception as e:
+        # it'll fail for the first time, when cookie file is not present
+        print("Cookies:", e)
     return driver
 
 
@@ -142,15 +145,20 @@ def main(account):
 
 
 def multiprocess(n, pool_list):
-    # n is number of process to run
     with Pool(n) as p:
         print(p.map(main, pool_list))
 
 
 if __name__ == '__main__':
     accounts = account_fun()
+    # number of process to run
+    if len(accounts) >= 4:
+        memory = int(str(psutil.virtual_memory().total)[0])
+        if memory >= 8:
+            n = 8
+        else:
+            n = 4
+    else:
+        n = len(accounts)
 
-    # for acc in accounts:
-    #     main(acc)
-
-    multiprocess(2, accounts)
+    multiprocess(n, accounts)
