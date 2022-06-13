@@ -1,3 +1,5 @@
+This is a fork for Amirskhan https://github.com/amirskhan/facebook-activity-bot
+
 # Facebook activity bot
 This is a bot used for warming up facebook accounts. It can automate some of the actions of user to keep accounts active.
 
