@@ -1,5 +1,9 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import time
 import json
 from pathlib import Path
@@ -35,7 +39,11 @@ def selenium_driver(account):
 
     # options.add_argument(f'user-agent={user_agent}')
     options.add_argument("--disable-notifications")
-    driver = webdriver.Chrome(executable_path=driver_path, options=options)
+    s = Service('chromedriver.exe')
+    driver = webdriver.Chrome(
+        service=s,
+        options=options
+    )
     website = "https://www.facebook.com/"
     try:
         with open(cookies_path) as cookie_file:
@@ -60,13 +68,13 @@ def is_fb_logged_in(driver):
 
 
 def fb_login(driver, account):
-    username_box = driver.find_element_by_id('email')
+    username_box = driver.find_element(By.ID, "email")
     username_box.send_keys(account[0])
 
-    password_box = driver.find_element_by_id('pass')
+    password_box = driver.find_element(By.ID, "pass")
     password_box.send_keys(account[1])
 
-    login_box = driver.find_element_by_name('login')
+    login_box = driver.find_element(By.NAME, "login")
     login_box.click()
 
 
@@ -79,17 +87,17 @@ def random_wait(a=0, b=None):
 
 
 def scroll_down(driver, n):
-    html = driver.find_element_by_tag_name('html')
+    #html = driver.find_elements(By.TAG_NAME, "html")
+    WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.TAG_NAME, "html")))
+    html = driver.find_element(By.TAG_NAME, "html")
     for i in range(n):
         html.send_keys(Keys.PAGE_DOWN)
         random_wait(3, 7)
 
-
 # like posts
 def like_post(driver):
-    # "//*[contains(text(), 'My Button')]"
-    # '//div[contains(text(), "{0}") and @class="inner"]'.format(text)
-    like_post = driver.find_elements_by_xpath("//*[contains(text(), 'Like')]")
+    WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, "//*[contains(text(), 'Like')]")))
+    like_post = driver.find_elements(By.XPATH, "//*[contains(text(), 'Like')]")
     print(len(like_post))
     for ele in like_post:
         try:
@@ -99,10 +107,12 @@ def like_post(driver):
             print(e)
         random_wait(3, 7)
 
-
 # add friend
 def add_friend(driver):
-    add_friend = driver.find_elements_by_xpath("//*[contains(text(), 'Add Friend')]")
+    add_friend_url = 'https://www.facebook.com/friends/suggestions'
+    driver.get(add_friend_url)
+    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[contains(text(), 'Add Friend')]")))
+    add_friend = driver.find_elements(By.XPATH, "//*[contains(text(), 'Add Friend')]")
     print(len(add_friend))
     for ele in add_friend[:3]:
         try:
@@ -112,13 +122,13 @@ def add_friend(driver):
             print(e)
         random_wait(3, 7)
 
-
 # like pages
 def like_page(driver):
     like_page_url = 'https://www.facebook.com/pages/?category=top&ref=bookmarks'
     driver.get(like_page_url)
     scroll_down(driver, 1)
-    like_page = driver.find_elements_by_xpath("//*[contains(text(), 'Like')]")
+    WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, "//*[contains(text(), 'Like')]")))
+    like_page = driver.find_elements(By.XPATH, "//*[contains(text(), 'Like')]")
     print(len(like_page))
     for ele in like_page[1:10]:
         try:
@@ -127,7 +137,6 @@ def like_page(driver):
         except Exception as e:
             print(e)
         random_wait(3, 7)
-
 
 def main(account):
     driver = selenium_driver(account)
@@ -163,3 +172,6 @@ if __name__ == '__main__':
         n = len(accounts)
 
     multiprocess(n, accounts)
+    
+    
+#https://texasvaluesaction.org/amirskhan/facebook-activity-bot
